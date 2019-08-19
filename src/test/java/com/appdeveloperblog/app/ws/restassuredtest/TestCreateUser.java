@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.http.HttpStatus;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -16,7 +18,7 @@ import io.restassured.response.Response;
 
 class TestCreateUser {
 
-	private final String RESOURCE_PATH = "/mobile-app-ws/users";
+	private final String CONTEXT_PATH = "/mobile-app-ws";
 	
 	@BeforeEach
 	void setUp() throws Exception {
@@ -55,7 +57,7 @@ class TestCreateUser {
 			.accept("application/json")
 			.body(userDetails)
 		.when()
-			.post(RESOURCE_PATH)
+			.post(CONTEXT_PATH + "/users")
 		.then()
 			.statusCode(HttpStatus.SC_OK)
 			.contentType("application/json")
@@ -64,6 +66,23 @@ class TestCreateUser {
 		
 		String userId = response.jsonPath().getString("userId");
 		assertNotNull(userId);
+		assertTrue(userId.length() == 30);
+		
+		try {
+			String bodyContent = response.getBody().asString();
+			JSONObject bodyJsonObject = new JSONObject(bodyContent);
+			JSONArray addressesJsonArray = bodyJsonObject.getJSONArray("addresses");
+			assertTrue(addressesJsonArray.length() == addresses.size());
+			
+			for (int i = 0; i < addressesJsonArray.length(); i++) {
+				JSONObject addressJsonObject = addressesJsonArray.getJSONObject(i);
+				String addressId = addressJsonObject.getString("addressId");
+				assertNotNull(addressId);
+				assertTrue(addressId.length() == 30);
+			}
+		} catch (Exception e) {
+			fail(e.getMessage());
+		}
 	}
 
 }
